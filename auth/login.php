@@ -7,7 +7,7 @@ $message = "";
 if(isset($_POST['login'])){
 
     $email = $_POST['email'];
-    $password = hash('sha256', $_POST['password']);
+    $password = $_POST['password'];
 
     $stmt = $pdo->prepare("SELECT * FROM users WHERE email = ? AND password = ?");
     $stmt->execute([$email, $password]);
@@ -27,7 +27,7 @@ if(isset($_POST['login'])){
     }
 }
 
-}
+
 ?>
 
 <!DOCTYPE html>
