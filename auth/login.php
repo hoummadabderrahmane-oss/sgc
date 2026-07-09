@@ -1,38 +1,116 @@
+<?php
+session_start();
+require "../config/database.php";
+
+$message = "";
+
+if(isset($_POST['login'])){
+
+    $email = $_POST['email'];
+    $password = hash('sha256', $_POST['password']);
+
+    $sql = "SELECT * FROM users WHERE email='$email' AND password='$password'";
+    $result = $conn->query($sql);
+
+    if($result->num_rows > 0){
+
+        $user = $result->fetch_assoc();
+
+        $_SESSION['user'] = $user['fullname'];
+        $_SESSION['role'] = $user['role'];
+
+        header("Location: ../dashboard/index.php");
+        exit();
+
+    }else{
+        $message = "Invalid Email or Password";
+    }
+
+}
+?>
+
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CMS Baladiya - Login</title>
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="../assets/css/style.css">
+<meta charset="UTF-8">
+
+<title>Login</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
+
 </head>
-<body>
 
-<div class="container vh-100 d-flex justify-content-center align-items-center">
-    <div class="card shadow-lg p-4" style="width:400px;">
-        <h2 class="text-center mb-4">CMS Baladiya</h2>
+<body class="bg-light">
 
-        <form action="#" method="POST">
+<div class="container">
 
-            <div class="mb-3">
-                <label>Email</label>
-                <input type="email" class="form-control" placeholder="Enter email">
-            </div>
+<div class="row justify-content-center mt-5">
 
-            <div class="mb-3">
-                <label>Password</label>
-                <input type="password" class="form-control" placeholder="Password">
-            </div>
+<div class="col-md-4">
 
-            <button class="btn btn-primary w-100">
-                Login
-            </button>
+<div class="card shadow">
 
-        </form>
+<div class="card-header bg-primary text-white">
 
-    </div>
+<h4>CMS Baladiya Login</h4>
+
+</div>
+
+<div class="card-body">
+
+<?php if($message!=""){ ?>
+
+<div class="alert alert-danger">
+<?= $message ?>
+</div>
+
+<?php } ?>
+
+<form method="POST">
+
+<div class="mb-3">
+
+<label>Email</label>
+
+<input
+type="email"
+name="email"
+class="form-control"
+required>
+
+</div>
+
+<div class="mb-3">
+
+<label>Password</label>
+
+<input
+type="password"
+name="password"
+class="form-control"
+required>
+
+</div>
+
+<button
+name="login"
+class="btn btn-primary w-100">
+
+Login
+
+</button>
+
+</form>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
 </div>
 
 </body>
