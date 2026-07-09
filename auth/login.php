@@ -8,12 +8,11 @@ if(isset($_POST['login'])){
     $email = $_POST['email'];
     $password = $_POST['password'];
 
-    $stmt = $pdo->prepare("SELECT * FROM users WHERE email = ? AND password = ?");
-    $stmt->execute([$email, $password]);
-
+    $stmt = $pdo->prepare("SELECT * FROM users WHERE email = ?");
+    $stmt->execute([$email]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if($user){
+    if($user && password_verify($password, $user['password'])){
         $_SESSION['user'] = $user['fullname'];
         $_SESSION['role'] = $user['role'];
 
