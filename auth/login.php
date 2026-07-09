@@ -11,6 +11,11 @@ if(isset($_POST['login'])){
 
     $stmt = $pdo->prepare("SELECT * FROM users WHERE email = ? AND password = ?");
     $stmt->execute([$email, $password]);
+    echo "Email: " . $email . "<br>";
+echo "Password: " . $password . "<br>";
+
+echo "Rows found: " . $stmt->rowCount();
+exit();
 
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
