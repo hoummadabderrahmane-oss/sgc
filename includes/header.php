@@ -1,7 +1,13 @@
 <?php
-// CRITICAL: Load database FIRST, then session
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/session.php';
+
+// Detect base path for assets
+$scriptName = $_SERVER['SCRIPT_NAME'] ?? '';
+$basePath = dirname(dirname($scriptName));
+$basePath = str_replace('\\', '/', $basePath);
+if ($basePath == '/' || $basePath == '\\') $basePath = '';
+$assetsPath = $basePath . '/assets';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -11,7 +17,7 @@ require_once __DIR__ . '/session.php';
     <title><?= isset($pageTitle) ? $pageTitle . ' - ' : '' ?>CMS Baladiya</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="/assets/css/style.css">
+    <link rel="stylesheet" href="<?= $assetsPath ?>/css/style.css">
 </head>
 <body>
     <?php if (isLoggedIn()): ?>

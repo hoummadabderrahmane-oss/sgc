@@ -1,13 +1,18 @@
 <?php
-// MUST load database FIRST before anything else
 require_once __DIR__ . '/../config/database.php';
-require_once __DIR__ . '/../includes/session.php'; // NEW - separate session handling
+require_once __DIR__ . '/../includes/session.php';
 
-// Check if already logged in
-if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])) {
+if (isLoggedIn()) {
     header('Location: /dashboard/');
     exit;
 }
+
+// Detect base path
+$scriptName = $_SERVER['SCRIPT_NAME'] ?? '';
+$basePath = dirname(dirname($scriptName));
+$basePath = str_replace('\\', '/', $basePath);
+if ($basePath == '/' || $basePath == '\\') $basePath = '';
+$assetsPath = $basePath . '/assets';
 
 $error = '';
 
@@ -18,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($username) || empty($password)) {
         $error = 'Please fill in all fields';
     } elseif (!isset($pdo) || $pdo === null) {
-        $error = 'Database connection failed. Check config/database.php';
+        $error = 'Database connection failed';
     } else {
         try {
             $stmt = $pdo->prepare("SELECT * FROM users WHERE username = ? AND status = 'active'");
@@ -33,11 +38,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['department'] = $user['department'];
                 
                 $pdo->prepare("UPDATE users SET last_login = NOW() WHERE id = ?")->execute([$user['id']]);
-                
-                // Flash message
-                $_SESSION['flash'] = ['type' => 'success', 'message' => 'Welcome back, ' . $user['full_name'] . '!'];
-                
-                header('Location: /dashboard/');
+                setFlash('success', 'Welcome back, ' . $user['full_name'] . '!');
+                header('Location: ' . $basePath . '/dashboard/');
                 exit;
             } else {
                 $error = 'Invalid username or password';
@@ -56,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <title>Login - CMS Baladiya</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="/assets/css/style.css">
+    <link rel="stylesheet" href="<?= $assetsPath ?>/css/style.css">
 </head>
 <body>
     <div class="login-page">
@@ -80,14 +82,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <label class="form-label text-muted small fw-semibold text-uppercase">Username</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="bi bi-person"></i></span>
-                        <input type="text" name="username" class="form-control" placeholder="Enter username" required autofocus>
+                        <input type="text" name="username" class="form-control" placeholder="admin" required autofocus>
                     </div>
                 </div>
                 <div class="mb-4">
                     <label class="form-label text-muted small fw-semibold text-uppercase">Password</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="bi bi-lock"></i></span>
-                        <input type="password" name="password" class="form-control" placeholder="Enter password" required>
+                        <input type="password" name="password" class="form-control" placeholder="admin123" required>
                     </div>
                 </div>
                 <button type="submit" class="btn btn-primary w-100 py-3 mb-3">
@@ -101,6 +103,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="/assets/js/main.js"></script>
+    <script src="<?= $assetsPath ?>/js/main.js"></script>
 </body>
 </html>
