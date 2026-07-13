@@ -1,4 +1,4 @@
-<nav id="sidebar" class="col-md-3 col-lg-2 d-md-block sidebar collapse bg-dark">
+<nav class="col-md-3 col-lg-2 d-md-block sidebar collapse">
     <div class="position-sticky pt-3">
         <ul class="nav flex-column">
             <li class="nav-item">
@@ -27,6 +27,9 @@
                 </a>
             </li>
             <?php if (hasRole('admin')): ?>
+            <li class="nav-item mt-3">
+                <small class="text-muted px-3 text-uppercase" style="font-size:0.7rem;letter-spacing:0.1em;">Admin</small>
+            </li>
             <li class="nav-item">
                 <a class="nav-link <?= strpos($_SERVER['PHP_SELF'], '/users/') !== false ? 'active' : '' ?>" href="/users/">
                     <i class="bi bi-shield-lock"></i> Users

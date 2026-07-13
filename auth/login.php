@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../includes/functions.php';
 
 if (isLoggedIn()) {
@@ -26,7 +27,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['role'] = $user['role'];
             $_SESSION['department'] = $user['department'];
             
-            // Update last login
             $pdo->prepare("UPDATE users SET last_login = NOW() WHERE id = ?")->execute([$user['id']]);
             
             setFlash('success', 'Welcome back, ' . $user['full_name'] . '!');
@@ -39,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 ?>
 <!DOCTYPE html>
-<html lang="en" data-bs-theme="dark">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -49,43 +49,48 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="stylesheet" href="/assets/css/style.css">
 </head>
 <body>
-    <div class="login-container">
-        <div class="card login-card">
-            <div class="text-center mb-4">
-                <i class="bi bi-building display-4 text-primary"></i>
-                <h2 class="mt-2">CMS Baladiya</h2>
-                <p class="text-muted">Municipality Management System</p>
+    <div class="login-page">
+        <div class="login-card">
+            <div class="text-center">
+                <div class="login-logo">
+                    <i class="bi bi-building"></i>
+                </div>
+                <h2 class="fw-bold mb-1">CMS Baladiya</h2>
+                <p class="text-muted mb-4">Municipality Management System</p>
             </div>
             
             <?php if ($error): ?>
-                <div class="alert alert-danger"><?= $error ?></div>
+                <div class="alert alert-danger mb-4">
+                    <i class="bi bi-exclamation-circle me-2"></i><?= $error ?>
+                </div>
             <?php endif; ?>
             
             <form method="POST" action="">
                 <div class="mb-3">
-                    <label class="form-label">Username</label>
+                    <label class="form-label text-muted small fw-semibold text-uppercase">Username</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="bi bi-person"></i></span>
                         <input type="text" name="username" class="form-control" placeholder="Enter username" required autofocus>
                     </div>
                 </div>
                 <div class="mb-4">
-                    <label class="form-label">Password</label>
+                    <label class="form-label text-muted small fw-semibold text-uppercase">Password</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="bi bi-lock"></i></span>
                         <input type="password" name="password" class="form-control" placeholder="Enter password" required>
                     </div>
                 </div>
-                <button type="submit" class="btn btn-primary w-100">
-                    <i class="bi bi-box-arrow-in-right"></i> Sign In
+                <button type="submit" class="btn btn-primary w-100 py-3 mb-3">
+                    <i class="bi bi-box-arrow-in-right me-2"></i> Sign In
                 </button>
             </form>
             
-            <div class="text-center mt-3">
-                <small class="text-muted">Default: admin / admin123</small>
+            <div class="text-center">
+                <small class="text-muted">Default: <span class="text-primary">admin</span> / <span class="text-primary">admin123</span></small>
             </div>
         </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/assets/js/main.js"></script>
 </body>
 </html>
