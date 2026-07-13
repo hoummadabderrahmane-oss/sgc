@@ -1,6 +1,7 @@
 <?php
-require_once __DIR__ . '/functions.php';
+// CRITICAL: Load database FIRST, then session
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/session.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">

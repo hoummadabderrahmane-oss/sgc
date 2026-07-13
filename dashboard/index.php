@@ -24,7 +24,6 @@ $recentRequests = $pdo->query("SELECT r.*, c.full_name as citizen_name FROM requ
     </span>
 </div>
 
-<!-- Stats -->
 <div class="row g-4 mb-4">
     <div class="col-md-3">
         <div class="card stat-card primary h-100">
@@ -57,9 +56,6 @@ $recentRequests = $pdo->query("SELECT r.*, c.full_name as citizen_name FROM requ
                     <div class="p-2 rounded-3" style="background:rgba(16,185,129,0.1);">
                         <i class="bi bi-file-earmark-text fs-4 text-success"></i>
                     </div>
-                </div>
-                <div class="mt-3">
-                    <span class="text-muted small">Total files in system</span>
                 </div>
             </div>
         </div>
