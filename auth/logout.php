@@ -1,37 +1,28 @@
-```php
 <?php
 /**
- * ==========================================
- * SGC v1.0
- * Logout
- * ==========================================
+ * ============================================
+ * SGC - Déconnexion
+ * ============================================
  */
-
+define('SGC_ACCESS', true);
 session_start();
 
-// حذف جميع متغيرات الجلسة
-$_SESSION = [];
+require_once '../config/database.php';
 
-// حذف Cookie ديال Session إذا كانت موجودة
-if (ini_get("session.use_cookies")) {
-
-    $params = session_get_cookie_params();
-
-    setcookie(
-        session_name(),
-        '',
-        time() - 42000,
-        $params["path"],
-        $params["domain"],
-        $params["secure"],
-        $params["httponly"]
-    );
+// Logger la déconnexion
+if (isset($_SESSION['user_id'])) {
+    logActivity('deconnexion');
 }
 
-// تدمير الجلسة
+// Détruire la session
+$_SESSION = [];
+session_unset();
 session_destroy();
 
-// الرجوع لصفحة Login
-header("Location: login.php");
-exit();
-```
+// Supprimer le cookie de session
+if (isset($_COOKIE[session_name()])) {
+    setcookie(session_name(), '', time() - 3600, '/');
+}
+
+header('Location: ../index.php');
+exit;

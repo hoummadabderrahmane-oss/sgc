@@ -1,89 +1,62 @@
-```php
-<div class="sidebar">
-
-<div class="logo">
-
-<i class="fa-solid fa-building"></i>
-
-<h4>SGC</h4>
-
-</div>
-
-<ul>
-
-<li>
-<a href="dashboard.php">
-
-<i class="fa-solid fa-gauge"></i>
-
-Dashboard
-
-</a>
-</li>
-
-<li>
-<a href="citoyens/">
-
-<i class="fa-solid fa-users"></i>
-
-Citoyens
-
-</a>
-</li>
-
-<li>
-<a href="documents/">
-
-<i class="fa-solid fa-folder-open"></i>
-
-Documents
-
-</a>
-</li>
-
-<li>
-<a href="utilisateurs/">
-
-<i class="fa-solid fa-user-gear"></i>
-
-Utilisateurs
-
-</a>
-</li>
-
-<li>
-<a href="journal/">
-
-<i class="fa-solid fa-clock-rotate-left"></i>
-
-Journal
-
-</a>
-</li>
-
-<li>
-<a href="parametres/">
-
-<i class="fa-solid fa-gears"></i>
-
-Paramètres
-
-</a>
-</li>
-
-<li>
-
-<a href="../auth/logout.php">
-
-<i class="fa-solid fa-right-from-bracket"></i>
-
-Déconnexion
-
-</a>
-
-</li>
-
-</ul>
-
-</div>
-```
+<?php
+/**
+ * ============================================
+ * SGC - Sidebar de navigation
+ * ============================================
+ */
+// Déterminer la page active
+$currentPage = basename($_SERVER['PHP_SELF']);
+$currentDir = basename(dirname($_SERVER['PHP_SELF']));
+?>
+<!-- Sidebar -->
+<nav class="sidebar">
+    <div class="sidebar-brand">
+        <i class="fas fa-city"></i>
+        <h4>SGC</h4>
+        <small>Système de Gestion des Citoyens</small>
+    </div>
+    
+    <div class="sidebar-menu">
+        <a href="../admin/dashboard.php" class="nav-link <?= ($currentPage == 'dashboard.php') ? 'active' : '' ?>">
+            <i class="fas fa-tachometer-alt"></i>
+            <span>Tableau de bord</span>
+        </a>
+        
+        <a href="../citoyens/index.php" class="nav-link <?= ($currentDir == 'citoyens') ? 'active' : '' ?>">
+            <i class="fas fa-users"></i>
+            <span>Gestion des Citoyens</span>
+        </a>
+        
+        <a href="#" class="nav-link">
+            <i class="fas fa-file-alt"></i>
+            <span>Documents</span>
+        </a>
+        
+        <a href="#" class="nav-link">
+            <i class="fas fa-chart-bar"></i>
+            <span>Statistiques</span>
+        </a>
+        
+        <?php if (isSuperAdmin()): ?>
+        <a href="#" class="nav-link">
+            <i class="fas fa-user-shield"></i>
+            <span>Utilisateurs</span>
+        </a>
+        
+        <a href="#" class="nav-link">
+            <i class="fas fa-history"></i>
+            <span>Journal d'activités</span>
+        </a>
+        
+        <a href="#" class="nav-link">
+            <i class="fas fa-cog"></i>
+            <span>Paramètres</span>
+        </a>
+        <?php endif; ?>
+    </div>
+    
+    <div class="sidebar-footer">
+        <i class="fas fa-code"></i> SGC v1.0<br>
+        <?= htmlspecialchars($currentUser['commune']) ?>
+    </div>
+</nav>

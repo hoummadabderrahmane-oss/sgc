@@ -1,218 +1,185 @@
 <?php
-require_once "../auth/auth_check.php";
+/**
+ * ============================================
+ * SGC - Tableau de bord
+ * ============================================
+ */
+define('SGC_ACCESS', true);
+require_once '../auth/auth_check.php';
+require_once '../config/database.php';
+
+$pageTitle = 'Tableau de bord';
+$pageIcon = 'fa-tachometer-alt';
+
+try {
+    $db = getDB();
+    
+    // Statistiques
+    $stats = [
+        'total_citoyens' => $db->query("SELECT COUNT(*) FROM citoyens WHERE statut = 'actif'")->fetchColumn(),
+        'total_hommes' => $db->query("SELECT COUNT(*) FROM citoyens WHERE sexe = 'M' AND statut = 'actif'")->fetchColumn(),
+        'total_femmes' => $db->query("SELECT COUNT(*) FROM citoyens WHERE sexe = 'F' AND statut = 'actif'")->fetchColumn(),
+        'total_documents' => $db->query("SELECT COUNT(*) FROM documents WHERE statut = 'valide'")->fetchColumn(),
+        'nouveaux_mois' => $db->query("SELECT COUNT(*) FROM citoyens WHERE MONTH(created_at) = MONTH(CURRENT_DATE()) AND YEAR(created_at) = YEAR(CURRENT_DATE())")->fetchColumn()
+    ];
+    
+    // Derniers citoyens ajoutés
+    $stmt = $db->query("
+        SELECT c.*, u.prenom as agent_prenom, u.nom as agent_nom 
+        FROM citoyens c 
+        LEFT JOIN utilisateurs u ON c.created_by = u.id 
+        ORDER BY c.created_at DESC 
+        LIMIT 5
+    ");
+    $derniersCitoyens = $stmt->fetchAll();
+    
+    // Citoyens par quartier (pour le graphique)
+    $stmt = $db->query("
+        SELECT quartier, COUNT(*) as total 
+        FROM citoyens 
+        WHERE statut = 'actif' AND quartier IS NOT NULL 
+        GROUP BY quartier 
+        ORDER BY total DESC 
+        LIMIT 6
+    ");
+    $quartiers = $stmt->fetchAll();
+    
+} catch (PDOException $e) {
+    error_log("Erreur dashboard: " . $e->getMessage());
+    $stats = ['total_citoyens' => 0, 'total_hommes' => 0, 'total_femmes' => 0, 'total_documents' => 0, 'nouveaux_mois' => 0];
+    $derniersCitoyens = [];
+    $quartiers = [];
+}
+
+require_once '../includes/header.php';
+require_once '../includes/sidebar.php';
+require_once '../includes/navbar.php';
 ?>
 
-<!DOCTYPE html>
-<html lang="fr">
-
-<head>
-
-<meta charset="UTF-8">
-
-<meta name="viewport" content="width=device-width, initial-scale=1">
-
-<title>Dashboard | SGC</title>
-
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
-
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
-
-<style>
-
-body{
-background:#f4f6f9;
-}
-
-.sidebar{
-
-width:250px;
-
-height:100vh;
-
-background:#0B6E4F;
-
-position:fixed;
-
-left:0;
-
-top:0;
-
-color:white;
-
-}
-
-.sidebar h4{
-
-padding:20px;
-
-text-align:center;
-
-}
-
-.sidebar a{
-
-display:block;
-
-padding:15px 20px;
-
-color:white;
-
-text-decoration:none;
-
-}
-
-.sidebar a:hover{
-
-background:#09553d;
-
-}
-
-.content{
-
-margin-left:250px;
-
-padding:30px;
-
-}
-
-.card{
-
-border:none;
-
-border-radius:15px;
-
-box-shadow:0 4px 15px rgba(0,0,0,.08);
-
-}
-
-</style>
-
-</head>
-
-<body>
-
-<div class="sidebar">
-
-<h4>SGC</h4>
-
-<a href="#">
-<i class="fa fa-house"></i>
- Dashboard
- </a>
-
- <a href="#">
- <i class="fa fa-users"></i>
-  Citoyens
-  </a>
-
-  <a href="#">
-  <i class="fa fa-file-lines"></i>
-   Documents
-   </a>
-
-   <a href="#">
-   <i class="fa fa-user-gear"></i>
-    Utilisateurs
-    </a>
-
-    <a href="../auth/logout.php">
-    <i class="fa fa-right-from-bracket"></i>
-     Déconnexion
-     </a>
-
-     </div>
-
-     <div class="content">
-
-     <div class="d-flex justify-content-between align-items-center">
-
-     <div>
-
-     <h2>Bienvenue,
-     <?= htmlspecialchars($_SESSION['full_name']) ?>
-
-     </h2>
-
-     <p class="text-muted">
-
-     Système de Gestion Communale
-
-     </p>
-
-     </div>
-
-     </div>
-
-     <div class="row mt-4">
-
-     <div class="col-md-3">
-
-     <div class="card">
-
-     <div class="card-body">
-
-     <h5>👥 Citoyens</h5>
-
-     <h2>0</h2>
-
-     </div>
-
-     </div>
-
-     </div>
-
-     <div class="col-md-3">
-
-     <div class="card">
-
-     <div class="card-body">
-
-     <h5>📄 Documents</h5>
-
-     <h2>0</h2>
-
-     </div>
-
-     </div>
-
-     </div>
-
-     <div class="col-md-3">
-
-     <div class="card">
-
-     <div class="card-body">
-
-     <h5>👤 Utilisateurs</h5>
-
-     <h2>1</h2>
-
-     </div>
-
-     </div>
-
-     </div>
-
-     <div class="col-md-3">
-
-     <div class="card">
-
-     <div class="card-body">
-
-     <h5>📝 Activités</h5>
-
-     <h2>0</h2>
-
-     </div>
-
-     </div>
-
-     </div>
-
-     </div>
-
-     </div>
-
-     </body>
-
-     </html>
+<div class="main-content">
+    <!-- Stats Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon green">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-number"><?= number_format($stats['total_citoyens']) ?></div>
+                <div class="stat-label">Citoyens actifs</div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon blue">
+                    <i class="fas fa-male"></i>
+                </div>
+                <div class="stat-number"><?= number_format($stats['total_hommes']) ?></div>
+                <div class="stat-label">Hommes</div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon orange">
+                    <i class="fas fa-female"></i>
+                </div>
+                <div class="stat-number"><?= number_format($stats['total_femmes']) ?></div>
+                <div class="stat-label">Femmes</div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon red">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <div class="stat-number"><?= number_format($stats['total_documents']) ?></div>
+                <div class="stat-label">Documents valides</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row g-4">
+        <!-- Graphique -->
+        <div class="col-lg-8">
+            <div class="data-table-card">
+                <div class="data-table-header">
+                    <h5><i class="fas fa-chart-pie me-2 text-success"></i>Répartition par quartier</h5>
+                </div>
+                <div class="p-4">
+                    <canvas id="quartierChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Derniers citoyens -->
+        <div class="col-lg-4">
+            <div class="data-table-card">
+                <div class="data-table-header">
+                    <h5><i class="fas fa-clock me-2 text-success"></i>Derniers ajouts</h5>
+                </div>
+                <div class="p-0">
+                    <?php if (empty($derniersCitoyens)): ?>
+                        <div class="p-4 text-center text-muted">
+                            <i class="fas fa-inbox fa-2x mb-2"></i>
+                            <p>Aucun citoyen enregistré</p>
+                        </div>
+                    <?php else: ?>
+                        <div class="list-group list-group-flush">
+                            <?php foreach ($derniersCitoyens as $c): ?>
+                                <div class="list-group-item d-flex align-items-center py-3">
+                                    <div class="user-avatar me-3 flex-shrink-0" style="width: 42px; height: 42px; font-size: 0.85rem;">
+                                        <?= strtoupper(substr($c['prenom'], 0, 1) . substr($c['nom'], 0, 1)) ?>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <div class="fw-bold"><?= htmlspecialchars($c['prenom'] . ' ' . $c['nom']) ?></div>
+                                        <small class="text-muted">
+                                            <i class="fas fa-map-marker-alt me-1"></i><?= htmlspecialchars($c['quartier'] ?? 'N/A') ?>
+                                            <span class="mx-1">•</span>
+                                            <i class="fas fa-user me-1"></i><?= htmlspecialchars($c['agent_prenom'] . ' ' . $c['agent_nom']) ?>
+                                        </small>
+                                    </div>
+                                    <small class="text-muted"><?= date('d/m/Y', strtotime($c['created_at'])) ?></small>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Graphique des quartiers
+    const ctx = document.getElementById('quartierChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: <?= json_encode(array_column($quartiers, 'quartier')) ?>,
+            datasets: [{
+                label: 'Nombre de citoyens',
+                data: <?= json_encode(array_column($quartiers, 'total')) ?>,
+                backgroundColor: 'rgba(26, 95, 42, 0.8)',
+                borderColor: '#1a5f2a',
+                borderWidth: 2,
+                borderRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { stepSize: 1 }
+                }
+            }
+        }
+    });
+</script>
+
+<?php require_once '../includes/footer.php'; ?>
