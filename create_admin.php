@@ -1,52 +1,68 @@
+```php
 <?php
+/**
+ * ==========================================================
+ * SGC v1.0
+ * create_admin.php
+ * Exécuter UNE seule fois puis supprimer le fichier.
+ * ==========================================================
+ */
 
-require "config/database.php";
+require_once "config/database.php";
 
+// معلومات الأدمن
+$fullname = "Administrateur";
+$email    = "admin@baladiya.com";
+$password = "admin123"; // غيّرها قبل التشغيل إذا بغيت
+$role     = "admin";
+$status   = "active";
 
-$name = "Administrator";
-$email = "admin@sgc.com";
-$password = "admin123";
-$role = "admin";
+// واش الإيميل موجود؟
+$stmt = $pdo->prepare("SELECT id FROM users WHERE email = ?");
+$stmt->execute([$email]);
 
-
-// Hash password
-$hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-
-
-// Check if admin exists
-$check = $pdo->prepare("SELECT * FROM users WHERE email = ?");
-$check->execute([$email]);
-
-
-if($check->rowCount() > 0){
-
-    echo "Admin already exists";
-
-}else{
-
-
-    $sql = "INSERT INTO users 
-            (name,email,password,role)
-            VALUES (?,?,?,?)";
-
-
-    $stmt = $pdo->prepare($sql);
-
-
-    $stmt->execute([
-        $name,
-        $email,
-        $hashedPassword,
-        $role
-    ]);
-
-
-    echo "
-    Admin created successfully <br><br>
-    Email: admin@sgc.com <br>
-    Password: admin123
-    ";
-
+if ($stmt->fetch()) {
+    die("❌ L'administrateur existe déjà.");
 }
 
+// تشفير كلمة المرور
+$hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+
+// إضافة المستخدم
+$stmt = $pdo->prepare("
+    INSERT INTO users (
+        fullname,
+        email,
+        password,
+        role,
+        status
+    ) VALUES (?, ?, ?, ?, ?)
+");
+
+$success = $stmt->execute([
+    $fullname,
+    $email,
+    $hashedPassword,
+    $role,
+    $status
+]);
+
+if ($success) {
+
+    echo "<h2 style='color:green'>
+            ✅ Administrateur créé avec succès.
+          </h2>";
+
+    echo "<p>Email : <strong>$email</strong></p>";
+    echo "<p>Mot de passe : <strong>$password</strong></p>";
+
+    echo "<hr>";
+    echo "<b>⚠️ Supprimez maintenant le fichier create_admin.php pour des raisons de sécurité.</b>";
+
+} else {
+
+    echo "Erreur lors de la création.";
+
+}
 ?>
+```
