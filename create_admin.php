@@ -1,128 +1,52 @@
 <?php
-require_once "config/database.php";
 
-$message = "";
+require "config/database.php";
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
-    $full_name = trim($_POST["full_name"]);
-        $email = trim($_POST["email"]);
-            $password = password_hash($_POST["password"], PASSWORD_DEFAULT);
+$name = "Administrator";
+$email = "admin@sgc.com";
+$password = "admin123";
+$role = "admin";
 
-                $check = $pdo->prepare("SELECT id FROM users WHERE email = ?");
-                    $check->execute([$email]);
 
-                        if ($check->rowCount() > 0) {
+// Hash password
+$hashedPassword = password_hash($password, PASSWORD_DEFAULT);
 
-                                $message = "Ce compte existe déjà.";
 
-                                    } else {
+// Check if admin exists
+$check = $pdo->prepare("SELECT * FROM users WHERE email = ?");
+$check->execute([$email]);
 
-                                            $stmt = $pdo->prepare("
-                                                        INSERT INTO users(full_name,email,password,role)
-                                                                    VALUES(?,?,?,?)
-                                                                            ");
 
-                                                                                    $stmt->execute([
-                                                                                                $full_name,
-                                                                                                            $email,
-                                                                                                                        $password,
-                                                                                                                                    "admin"
-                                                                                                                                            ]);
+if($check->rowCount() > 0){
 
-                                                                                                                                                    $message = "Administrateur créé avec succès.";
-                                                                                                                                                        }
-                                                                                                                                                        }
-                                                                                                                                                        ?>
+    echo "Admin already exists";
 
-                                                                                                                                                        <!DOCTYPE html>
-                                                                                                                                                        <html lang="fr">
-                                                                                                                                                        <head>
+}else{
 
-                                                                                                                                                        <meta charset="UTF-8">
-                                                                                                                                                        <meta name="viewport" content="width=device-width, initial-scale=1">
 
-                                                                                                                                                        <title>Create Admin</title>
+    $sql = "INSERT INTO users 
+            (name,email,password,role)
+            VALUES (?,?,?,?)";
 
-                                                                                                                                                        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
 
-                                                                                                                                                        </head>
+    $stmt = $pdo->prepare($sql);
 
-                                                                                                                                                        <body class="bg-light">
 
-                                                                                                                                                        <div class="container mt-5">
+    $stmt->execute([
+        $name,
+        $email,
+        $hashedPassword,
+        $role
+    ]);
 
-                                                                                                                                                        <div class="card shadow">
 
-                                                                                                                                                        <div class="card-header bg-success text-white">
+    echo "
+    Admin created successfully <br><br>
+    Email: admin@sgc.com <br>
+    Password: admin123
+    ";
 
-                                                                                                                                                        Créer le premier administrateur
+}
 
-                                                                                                                                                        </div>
-
-                                                                                                                                                        <div class="card-body">
-
-                                                                                                                                                        <?php if($message!=""){ ?>
-
-                                                                                                                                                        <div class="alert alert-info">
-
-                                                                                                                                                        <?= $message ?>
-
-                                                                                                                                                        </div>
-
-                                                                                                                                                        <?php } ?>
-
-                                                                                                                                                        <form method="POST">
-
-                                                                                                                                                        <div class="mb-3">
-
-                                                                                                                                                        <label>Nom complet</label>
-
-                                                                                                                                                        <input
-                                                                                                                                                        type="text"
-                                                                                                                                                        name="full_name"
-                                                                                                                                                        class="form-control"
-                                                                                                                                                        required>
-
-                                                                                                                                                        </div>
-
-                                                                                                                                                        <div class="mb-3">
-
-                                                                                                                                                        <label>Email</label>
-
-                                                                                                                                                        <input
-                                                                                                                                                        type="email"
-                                                                                                                                                        name="email"
-                                                                                                                                                        class="form-control"
-                                                                                                                                                        required>
-
-                                                                                                                                                        </div>
-
-                                                                                                                                                        <div class="mb-3">
-
-                                                                                                                                                        <label>Mot de passe</label>
-
-                                                                                                                                                        <input
-                                                                                                                                                        type="password"
-                                                                                                                                                        name="password"
-                                                                                                                                                        class="form-control"
-                                                                                                                                                        required>
-
-                                                                                                                                                        </div>
-
-                                                                                                                                                        <button class="btn btn-success">
-
-                                                                                                                                                        Créer l'administrateur
-
-                                                                                                                                                        </button>
-
-                                                                                                                                                        </form>
-
-                                                                                                                                                        </div>
-
-                                                                                                                                                        </div>
-
-                                                                                                                                                        </div>
-
-                                                                                                                                                        </body>
-                                                                                                                                                        </html>
+?>
