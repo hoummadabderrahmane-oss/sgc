@@ -1,42 +1,58 @@
-<?php
-// Database Configuration
-define('DB_HOST', 'localhost');
-define('DB_USER', 'root');
-define('DB_PASS', '');        // XAMPP default: empty
-define('DB_NAME', 'cms_baladiya');
+CREATE DATABASE IF NOT EXISTS cms_commune;
+USE cms_commune;
 
-// Create connection with FULL error display
-try {
-    $pdo = new PDO(
-        "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8mb4",
-        DB_USER,
-        DB_PASS,
-        [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            PDO::ATTR_EMULATE_PREPARES => false,
-        ]
-    );
-} catch (PDOException $e) {
-    die("
-    <div style='background:#0f0f1a;color:#ef4444;padding:40px;font-family:monospace;text-align:center;'>
-        <h2>❌ Database Connection Failed</h2>
-        <p><strong>Error:</strong> " . htmlspecialchars($e->getMessage()) . "</p>
-        <hr style='border-color:#334155;margin:20px 0;'>
-        <p style='color:#94a3b8;'>Check these:</p>
-        <ul style='color:#94a3b8;text-align:left;display:inline-block;'>
-            <li>Is MySQL running in XAMPP Control Panel?</li>
-            <li>Did you create database <code style='color:#6366f1;'>cms_baladiya</code>?</li>
-            <li>Is your password correct? (XAMPP default is empty)</li>
-            <li>Did you import <code style='color:#6366f1;'>database/schema.sql</code>?</li>
-        </ul>
-        <br><br>
-        <a href='http://localhost/phpmyadmin/' target='_blank' style='color:#6366f1;'>Open phpMyAdmin →</a>
-    </div>");
-}
+-- جدول المستخدمين
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+        full_name VARCHAR(100) NOT NULL,
+            email VARCHAR(100) NOT NULL UNIQUE,
+                password VARCHAR(255) NOT NULL,
+                    role ENUM('admin','employee') DEFAULT 'employee',
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                        );
 
-function getDB() {
-    global $pdo;
-    return $pdo;
-}
-?>
+                        -- جدول المواطنين
+                        CREATE TABLE citizens (
+                            id INT AUTO_INCREMENT PRIMARY KEY,
+                                cin VARCHAR(20) NOT NULL UNIQUE,
+                                    first_name VARCHAR(100) NOT NULL,
+                                        last_name VARCHAR(100) NOT NULL,
+                                            birth_date DATE,
+                                                gender ENUM('Male','Female'),
+                                                    address TEXT,
+                                                        phone VARCHAR(20),
+                                                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                                                            );
+
+                                                            -- جدول أنواع الوثائق
+                                                            CREATE TABLE document_types (
+                                                                id INT AUTO_INCREMENT PRIMARY KEY,
+                                                                    name VARCHAR(100) NOT NULL
+                                                                    );
+
+                                                                    -- جدول طلبات الوثائق
+                                                                    CREATE TABLE documents (
+                                                                        id INT AUTO_INCREMENT PRIMARY KEY,
+                                                                            citizen_id INT NOT NULL,
+                                                                                document_type_id INT NOT NULL,
+                                                                                    status ENUM('Pending','Approved','Rejected') DEFAULT 'Pending',
+                                                                                        request_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                                                                            FOREIGN KEY (citizen_id) REFERENCES citizens(id) ON DELETE CASCADE,
+                                                                                                FOREIGN KEY (document_type_id) REFERENCES document_types(id)
+                                                                                                );
+
+                                                                                                -- جدول سجل العمليات
+                                                                                                CREATE TABLE activity_logs (
+                                                                                                    id INT AUTO_INCREMENT PRIMARY KEY,
+                                                                                                        user_id INT NOT NULL,
+                                                                                                            action TEXT NOT NULL,
+                                                                                                                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                                                                                                    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+                                                                                                                    );
+
+                                                                                                                    -- إدخال أنواع الوثائق
+                                                                                                                    INSERT INTO document_types (name) VALUES
+                                                                                                                    ('Birth Certificate'),
+                                                                                                                    ('Residence Certificate'),
+                                                                                                                    ('Marriage Certificate'),
+                                                                                                                    ('Death Certificate');
