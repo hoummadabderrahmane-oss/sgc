@@ -1,45 +1,28 @@
 <?php
-/**
- * ============================================
- * SGC - Supprimer un Citoyen (Direct)
- * ============================================
- */
-define('SGC_ACCESS', true);
-require_once '../auth/auth_check.php';
-require_once '../config/database.php';
+session_start();
+require_once __DIR__ . '/../../config/database.php';
 
-global $currentUser;
+if (empty($_SESSION['admin_id'])) {
+    header('Location: ../auth/login.php');
+    exit;
+}
 
-// Vérifier l'ID
-if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
-    $_SESSION['error'] = "ID du citoyen invalide.";
+if ($_SERVER['REQUEST_METHOD'] !== 'POST'
+    || !hash_equals($_SESSION['csrf'] ?? '', $_POST['csrf'] ?? '')) {
+    $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Requête invalide.'];
     header('Location: index.php');
     exit;
 }
 
-$id = (int)$_GET['id'];
+$id = (int)($_POST['id'] ?? 0);
 
-try {
-    $db = getDB();
-    
-    $stmt = $db->prepare("SELECT nom, prenom FROM citoyens WHERE id = ?");
-    $stmt->execute([$id]);
-    $citoyen = $stmt->fetch();
-    
-    if ($citoyen) {
-        // Suppression logique
-        $stmt = $db->prepare("UPDATE citoyens SET statut = 'inactif' WHERE id = ?");
-        $stmt->execute([$id]);
-        
-        logActivity('suppression_citoyen', 'citoyens', $id, "Citoyen: {$citoyen['prenom']} {$citoyen['nom']}");
-        $_SESSION['success'] = "Citoyen '{$citoyen['prenom']} {$citoyen['nom']}' supprimé avec succès!";
-    } else {
-        $_SESSION['error'] = "Citoyen non trouvé.";
-    }
-    
-} catch (PDOException $e) {
-    $_SESSION['error'] = "Erreur lors de la suppression.";
-    error_log("Erreur suppression: " . $e->getMessage());
+$stmt = $pdo->prepare('DELETE FROM citoyens WHERE id = :id');
+$stmt->execute([':id' => $id]);
+
+if ($stmt->rowCount() > 0) {
+    $_SESSION['flash'] = ['type' => 'success', 'message' => 'Citoyen supprimé avec succès.'];
+} else {
+    $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Citoyen introuvable.'];
 }
 
 header('Location: index.php');

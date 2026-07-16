@@ -1,102 +1,94 @@
 <?php
-/**
- * ============================================
-  * SGC - Traitement Modification Citoyen
-   * ============================================
-    */
-    define('SGC_ACCESS', true);
-    require_once '../auth/auth_check.php';
-    require_once '../config/database.php';
+session_start();
+require_once __DIR__ . '/../../config/database.php';
 
-    global $currentUser;
+if (empty($_SESSION['admin_id'])) {
+    header('Location: ../auth/login.php');
+    exit;
+}
 
-    // Vérifier que c'est bien un POST
-    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-        header('Location: index.php');
-            exit;
-            }
+if ($_SERVER['REQUEST_METHOD'] !== 'POST'
+    || !hash_equals($_SESSION['csrf'] ?? '', $_POST['csrf'] ?? '')) {
+    $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Requête invalide.'];
+    header('Location: index.php');
+    exit;
+}
 
-            // Vérifier l'ID
-            if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
-                $_SESSION['error'] = "ID du citoyen invalide.";
-                    header('Location: index.php');
-                        exit;
-                        }
+$id = (int)($_POST['id'] ?? 0);
 
-                        $id = (int)$_GET['id'];
+/* Make sure the citizen exists */
+$stmt = $pdo->prepare('SELECT id FROM citoyens WHERE id = :id');
+$stmt->execute([':id' => $id]);
+if (!$stmt->fetch()) {
+    $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Citoyen introuvable.'];
+    header('Location: index.php');
+    exit;
+}
 
-                        // Récupérer les données
-                        $cin = trim($_POST['cin'] ?? '');
-                        $nom = trim($_POST['nom'] ?? '');
-                        $prenom = trim($_POST['prenom'] ?? '');
-                        $nom_ar = trim($_POST['nom_ar'] ?? '');
-                        $prenom_ar = trim($_POST['prenom_ar'] ?? '');
-                        $date_naissance = !empty($_POST['date_naissance']) ? $_POST['date_naissance'] : null;
-                        $lieu_naissance = trim($_POST['lieu_naissance'] ?? '');
-                        $sexe = $_POST['sexe'] ?? '';
-                        $etat_civil = $_POST['etat_civil'] ?? 'celibataire';
-                        $adresse = trim($_POST['adresse'] ?? '');
-                        $quartier = trim($_POST['quartier'] ?? '');
-                        $telephone = trim($_POST['telephone'] ?? '');
-                        $email = trim($_POST['email'] ?? '');
-                        $profession = trim($_POST['profession'] ?? '');
-                        $niveau_etude = trim($_POST['niveau_etude'] ?? '');
-                        $situation_sociale = $_POST['situation_sociale'] ?? 'normal';
-                        $nombre_enfants = (int)($_POST['nombre_enfants'] ?? 0);
-                        $notes = trim($_POST['notes'] ?? '');
+$data = [
+    'cin'                 => trim($_POST['cin'] ?? ''),
+    'nom'                 => trim($_POST['nom'] ?? ''),
+    'prenom'              => trim($_POST['prenom'] ?? ''),
+    'sexe'                => $_POST['sexe'] ?? 'M',
+    'date_naissance'      => $_POST['date_naissance'] ?? '',
+    'lieu_naissance'      => trim($_POST['lieu_naissance'] ?? ''),
+    'situation_familiale' => $_POST['situation_familiale'] ?? 'Célibataire',
+    'profession'          => trim($_POST['profession'] ?? ''),
+    'telephone'           => trim($_POST['telephone'] ?? ''),
+    'email'               => trim($_POST['email'] ?? ''),
+    'commune'             => trim($_POST['commune'] ?? ''),
+    'adresse'             => trim($_POST['adresse'] ?? ''),
+];
 
-                        // Validation
-                        $errors = [];
-                        if (empty($cin)) $errors[] = "Le CIN est obligatoire";
-                        if (empty($nom)) $errors[] = "Le nom est obligatoire";
-                        if (empty($prenom)) $errors[] = "Le prénom est obligatoire";
-                        if (empty($sexe)) $errors[] = "Le sexe est obligatoire";
+$errors = [];
+if ($data['cin'] === '')            $errors[] = 'Le CIN est obligatoire.';
+if ($data['nom'] === '')            $errors[] = 'Le nom est obligatoire.';
+if ($data['prenom'] === '')         $errors[] = 'Le prénom est obligatoire.';
+if ($data['date_naissance'] === '') $errors[] = 'La date de naissance est obligatoire.';
+if (!in_array($data['sexe'], ['M', 'F'], true)) $errors[] = 'Sexe invalide.';
+if ($data['email'] !== '' && !filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
+    $errors[] = 'Adresse email invalide.';
+}
 
-                        if (!empty($errors)) {
-                            $_SESSION['error'] = implode("<br>", $errors);
-                                header("Location: edit.php?id=$id");
-                                    exit;
-                                    }
+/* CIN unique (excluding current record) */
+if (!$errors) {
+    $stmt = $pdo->prepare('SELECT COUNT(*) FROM citoyens WHERE cin = :cin AND id != :id');
+    $stmt->execute([':cin' => $data['cin'], ':id' => $id]);
+    if ($stmt->fetchColumn() > 0) {
+        $errors[] = 'Ce CIN est déjà utilisé par un autre citoyen.';
+    }
+}
 
-                                    try {
-                                        $db = getDB();
-                                            
-                                                // Vérifier CIN unique (sauf pour ce citoyen)
-                                                    $stmt = $db->prepare("SELECT id FROM citoyens WHERE cin = ? AND id != ?");
-                                                        $stmt->execute([$cin, $id]);
-                                                            
-                                                                if ($stmt->fetch()) {
-                                                                        $_SESSION['error'] = "Ce CIN existe déjà pour un autre citoyen";
-                                                                                header("Location: edit.php?id=$id");
-                                                                                        exit;
-                                                                                            }
-                                                                                                
-                                                                                                    $stmt = $db->prepare("
-                                                                                                            UPDATE citoyens SET
-                                                                                                                        cin = ?, nom = ?, prenom = ?, nom_ar = ?, prenom_ar = ?,
-                                                                                                                                    date_naissance = ?, lieu_naissance = ?, sexe = ?, etat_civil = ?,
-                                                                                                                                                adresse = ?, quartier = ?, telephone = ?, email = ?, profession = ?,
-                                                                                                                                                            niveau_etude = ?, situation_sociale = ?, nombre_enfants = ?, notes = ?
-                                                                                                                                                                    WHERE id = ?
-                                                                                                                                                                        ");
-                                                                                                                                                                            
-                                                                                                                                                                                $stmt->execute([
-                                                                                                                                                                                        $cin, $nom, $prenom, $nom_ar, $prenom_ar,
-                                                                                                                                                                                                $date_naissance, $lieu_naissance, $sexe, $etat_civil,
-                                                                                                                                                                                                        $adresse, $quartier, $telephone, $email, $profession,
-                                                                                                                                                                                                                $niveau_etude, $situation_sociale, $nombre_enfants, $notes, $id
-                                                                                                                                                                                                                    ]);
-                                                                                                                                                                                                                        
-                                                                                                                                                                                                                            logActivity('modification_citoyen', 'citoyens', $id, "Citoyen modifié: $prenom $nom");
-                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                    $_SESSION['success'] = "Citoyen modifié avec succès!";
-                                                                                                                                                                                                                                        header('Location: index.php');
-                                                                                                                                                                                                                                            exit;
-                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                } catch (PDOException $e) {
-                                                                                                                                                                                                                                                    $_SESSION['error'] = "Erreur lors de la modification: " . $e->getMessage();
-                                                                                                                                                                                                                                                        error_log("Erreur modification citoyen: " . $e->getMessage());
-                                                                                                                                                                                                                                                            header("Location: edit.php?id=$id");
-                                                                                                                                                                                                                                                                exit;
-                                                                                                                                                                                                                                                                }
-                                                                                                                                                                                                                                                                
+if ($errors) {
+    $_SESSION['errors'] = $errors;
+    $_SESSION['old']    = $data;
+    header('Location: edit.php?id=' . $id);
+    exit;
+}
+
+$sql = "UPDATE citoyens SET
+            cin = :cin, nom = :nom, prenom = :prenom, sexe = :sexe,
+            date_naissance = :date_naissance, lieu_naissance = :lieu_naissance,
+            situation_familiale = :situation_familiale, profession = :profession,
+            telephone = :telephone, email = :email, commune = :commune, adresse = :adresse
+        WHERE id = :id";
+$stmt = $pdo->prepare($sql);
+$stmt->execute([
+    ':cin'                 => $data['cin'],
+    ':nom'                 => $data['nom'],
+    ':prenom'              => $data['prenom'],
+    ':sexe'                => $data['sexe'],
+    ':date_naissance'      => $data['date_naissance'],
+    ':lieu_naissance'      => $data['lieu_naissance'] ?: null,
+    ':situation_familiale' => $data['situation_familiale'],
+    ':profession'          => $data['profession'] ?: null,
+    ':telephone'           => $data['telephone'] ?: null,
+    ':email'               => $data['email'] ?: null,
+    ':commune'             => $data['commune'] ?: null,
+    ':adresse'             => $data['adresse'] ?: null,
+    ':id'                  => $id,
+]);
+
+$_SESSION['flash'] = ['type' => 'success', 'message' => 'Citoyen mis à jour avec succès.'];
+header('Location: index.php');
+exit;

@@ -1,91 +1,86 @@
 <?php
-/**
- * ============================================
-  * SGC - Traitement Ajout Citoyen
-   * ============================================
-    */
-    define('SGC_ACCESS', true);
-    require_once '../auth/auth_check.php';
-    require_once '../config/database.php';
+session_start();
+require_once __DIR__ . '/../../config/database.php';
 
-    global $currentUser;
+if (empty($_SESSION['admin_id'])) {
+    header('Location: ../auth/login.php');
+    exit;
+}
 
-    // Vérifier que c'est bien un POST
-    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-        header('Location: ajouter.php');
-            exit;
-            }
+/* POST only + CSRF */
+if ($_SERVER['REQUEST_METHOD'] !== 'POST'
+    || !hash_equals($_SESSION['csrf'] ?? '', $_POST['csrf'] ?? '')) {
+    $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Requête invalide.'];
+    header('Location: index.php');
+    exit;
+}
 
-            // Récupérer les données
-            $cin = trim($_POST['cin'] ?? '');
-            $nom = trim($_POST['nom'] ?? '');
-            $prenom = trim($_POST['prenom'] ?? '');
-            $nom_ar = trim($_POST['nom_ar'] ?? '');
-            $prenom_ar = trim($_POST['prenom_ar'] ?? '');
-            $date_naissance = !empty($_POST['date_naissance']) ? $_POST['date_naissance'] : null;
-            $lieu_naissance = trim($_POST['lieu_naissance'] ?? '');
-            $sexe = $_POST['sexe'] ?? '';
-            $etat_civil = $_POST['etat_civil'] ?? 'celibataire';
-            $adresse = trim($_POST['adresse'] ?? '');
-            $quartier = trim($_POST['quartier'] ?? '');
-            $telephone = trim($_POST['telephone'] ?? '');
-            $email = trim($_POST['email'] ?? '');
-            $profession = trim($_POST['profession'] ?? '');
-            $niveau_etude = trim($_POST['niveau_etude'] ?? '');
-            $situation_sociale = $_POST['situation_sociale'] ?? 'normal';
-            $nombre_enfants = (int)($_POST['nombre_enfants'] ?? 0);
-            $notes = trim($_POST['notes'] ?? '');
+/* ---------- Collect ---------- */
+$data = [
+    'cin'                 => trim($_POST['cin'] ?? ''),
+    'nom'                 => trim($_POST['nom'] ?? ''),
+    'prenom'              => trim($_POST['prenom'] ?? ''),
+    'sexe'                => $_POST['sexe'] ?? 'M',
+    'date_naissance'      => $_POST['date_naissance'] ?? '',
+    'lieu_naissance'      => trim($_POST['lieu_naissance'] ?? ''),
+    'situation_familiale' => $_POST['situation_familiale'] ?? 'Célibataire',
+    'profession'          => trim($_POST['profession'] ?? ''),
+    'telephone'           => trim($_POST['telephone'] ?? ''),
+    'email'               => trim($_POST['email'] ?? ''),
+    'commune'             => trim($_POST['commune'] ?? ''),
+    'adresse'             => trim($_POST['adresse'] ?? ''),
+];
 
-            // Validation
-            $errors = [];
-            if (empty($cin)) $errors[] = "Le CIN est obligatoire";
-            if (empty($nom)) $errors[] = "Le nom est obligatoire";
-            if (empty($prenom)) $errors[] = "Le prénom est obligatoire";
-            if (empty($sexe)) $errors[] = "Le sexe est obligatoire";
+/* ---------- Validate ---------- */
+$errors = [];
+if ($data['cin'] === '')            $errors[] = 'Le CIN est obligatoire.';
+if ($data['nom'] === '')            $errors[] = 'Le nom est obligatoire.';
+if ($data['prenom'] === '')         $errors[] = 'Le prénom est obligatoire.';
+if ($data['date_naissance'] === '') $errors[] = 'La date de naissance est obligatoire.';
+if (!in_array($data['sexe'], ['M', 'F'], true)) $errors[] = 'Sexe invalide.';
+if ($data['email'] !== '' && !filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
+    $errors[] = 'Adresse email invalide.';
+}
 
-            if (!empty($errors)) {
-                $_SESSION['error'] = implode("<br>", $errors);
-                    header('Location: ajouter.php');
-                        exit;
-                        }
+/* CIN unique */
+if (!$errors) {
+    $stmt = $pdo->prepare('SELECT COUNT(*) FROM citoyens WHERE cin = :cin');
+    $stmt->execute([':cin' => $data['cin']]);
+    if ($stmt->fetchColumn() > 0) {
+        $errors[] = 'Ce CIN existe déjà dans la base de données.';
+    }
+}
 
-                        try {
-                            $db = getDB();
-                                
-                                    // Vérifier CIN unique
-                                        $stmt = $db->prepare("SELECT id FROM citoyens WHERE cin = ?");
-                                            $stmt->execute([$cin]);
-                                                if ($stmt->fetch()) {
-                                                        $_SESSION['error'] = "Ce CIN existe déjà dans le système";
-                                                                header('Location: ajouter.php');
-                                                                        exit;
-                                                                            }
-                                                                                
-                                                                                    $stmt = $db->prepare("
-                                                                                            INSERT INTO citoyens (
-                                                                                                        cin, nom, prenom, nom_ar, prenom_ar, date_naissance, lieu_naissance,
-                                                                                                                    sexe, etat_civil, adresse, quartier, telephone, email, profession,
-                                                                                                                                niveau_etude, situation_sociale, nombre_enfants, notes, created_by
-                                                                                                                                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                                                                                                                                            ");
-                                                                                                                                                
-                                                                                                                                                    $stmt->execute([
-                                                                                                                                                            $cin, $nom, $prenom, $nom_ar, $prenom_ar, $date_naissance, $lieu_naissance,
-                                                                                                                                                                    $sexe, $etat_civil, $adresse, $quartier, $telephone, $email, $profession,
-                                                                                                                                                                            $niveau_etude, $situation_sociale, $nombre_enfants, $notes, $currentUser['id']
-                                                                                                                                                                                ]);
-                                                                                                                                                                                    
-                                                                                                                                                                                        $newId = $db->lastInsertId();
-                                                                                                                                                                                            logActivity('ajout_citoyen', 'citoyens', $newId, "Citoyen: $prenom $nom");
-                                                                                                                                                                                                
-                                                                                                                                                                                                    $_SESSION['success'] = "Citoyen ajouté avec succès!";
-                                                                                                                                                                                                        header('Location: index.php');
-                                                                                                                                                                                                            exit;
-                                                                                                                                                                                                                
-                                                                                                                                                                                                                } catch (PDOException $e) {
-                                                                                                                                                                                                                    $_SESSION['error'] = "Erreur lors de l'ajout: " . $e->getMessage();
-                                                                                                                                                                                                                        error_log("Erreur ajout citoyen: " . $e->getMessage());
-                                                                                                                                                                                                                            header('Location: ajouter.php');
-                                                                                                                                                                                                                                exit;
-                                                                                                                                                                                                                                }
-                                                                                                                                                                                                                                
+if ($errors) {
+    $_SESSION['errors'] = $errors;
+    $_SESSION['old']    = $data;
+    header('Location: ajouter.php');
+    exit;
+}
+
+/* ---------- Insert ---------- */
+$sql = "INSERT INTO citoyens
+        (cin, nom, prenom, sexe, date_naissance, lieu_naissance,
+         situation_familiale, profession, telephone, email, commune, adresse)
+        VALUES
+        (:cin, :nom, :prenom, :sexe, :date_naissance, :lieu_naissance,
+         :situation_familiale, :profession, :telephone, :email, :commune, :adresse)";
+$stmt = $pdo->prepare($sql);
+$stmt->execute([
+    ':cin'                 => $data['cin'],
+    ':nom'                 => $data['nom'],
+    ':prenom'              => $data['prenom'],
+    ':sexe'                => $data['sexe'],
+    ':date_naissance'      => $data['date_naissance'],
+    ':lieu_naissance'      => $data['lieu_naissance'] ?: null,
+    ':situation_familiale' => $data['situation_familiale'],
+    ':profession'          => $data['profession'] ?: null,
+    ':telephone'           => $data['telephone'] ?: null,
+    ':email'               => $data['email'] ?: null,
+    ':commune'             => $data['commune'] ?: null,
+    ':adresse'             => $data['adresse'] ?: null,
+]);
+
+$_SESSION['flash'] = ['type' => 'success', 'message' => 'Citoyen ajouté avec succès.'];
+header('Location: index.php');
+exit;
