@@ -78,14 +78,14 @@ try {
     // ===== DOCUMENTS =====
     $totalDocuments = $db->query("SELECT COUNT(*) FROM documents")->fetchColumn();
     $docsValides = $db->query("SELECT COUNT(*) FROM documents WHERE statut = 'valide'")->fetchColumn();
-    $docsEnAttente = $db->query("SELECT COUNT(*) FROM documents WHERE statut = 'en_attente'")->fetchColumn();
-    $docsRejetes = $db->query("SELECT COUNT(*) FROM documents WHERE statut = 'rejete'")->fetchColumn();
+    $docsExpires = $db->query("SELECT COUNT(*) FROM documents WHERE statut = 'expire'")->fetchColumn();
+    $docsAnnules = $db->query("SELECT COUNT(*) FROM documents WHERE statut = 'annule'")->fetchColumn();
 
     // Documents par type
     $stmt = $db->query("
-        SELECT type, COUNT(*) as total 
+        SELECT type_document, COUNT(*) as total 
         FROM documents 
-        GROUP BY type 
+        GROUP BY type_document 
         ORDER BY total DESC
     ");
     $docTypes = $stmt->fetchAll();
@@ -337,8 +337,8 @@ require_once $includesPath . 'navbar.php';
                                 <tr>
                                     <th>Total</th>
                                     <th class="text-success">Validés</th>
-                                    <th class="text-warning">En attente</th>
-                                    <th class="text-danger">Rejetés</th>
+                                    <th class="text-warning">Expirés</th>
+                                    <th class="text-danger">Annulés</th>
                                     <th>Taux de validation</th>
                                 </tr>
                             </thead>
@@ -346,8 +346,8 @@ require_once $includesPath . 'navbar.php';
                                 <tr>
                                     <td class="font-weight-bold"><?= number_format($totalDocuments) ?></td>
                                     <td class="text-success font-weight-bold"><?= number_format($docsValides) ?></td>
-                                    <td class="text-warning font-weight-bold"><?= number_format($docsEnAttente) ?></td>
-                                    <td class="text-danger font-weight-bold"><?= number_format($docsRejetes) ?></td>
+                                    <td class="text-warning font-weight-bold"><?= number_format($docsExpires) ?></td>
+                                    <td class="text-danger font-weight-bold"><?= number_format($docsAnnules) ?></td>
                                     <td>
                                         <?php 
                                         $taux = $totalDocuments > 0 ? round(($docsValides / $totalDocuments) * 100, 1) : 0;
@@ -416,9 +416,9 @@ require_once $includesPath . 'navbar.php';
     new Chart(document.getElementById('docStatusChart'), {
         type: 'pie',
         data: {
-            labels: ['Validés', 'En attente', 'Rejetés'],
+            labels: ['Validés', 'Expirés', 'Annulés'],
             datasets: [{
-                data: [<?= $docsValides ?>, <?= $docsEnAttente ?>, <?= $docsRejetes ?>],
+                data: [<?= $docsValides ?>, <?= $docsExpires ?>, <?= $docsAnnules ?>],
                 backgroundColor: ['#28a745', '#ffc107', '#dc3545'],
                 borderWidth: 2,
                 borderColor: '#fff'
@@ -489,11 +489,11 @@ require_once $includesPath . 'navbar.php';
     new Chart(document.getElementById('docTypeChart'), {
         type: 'bar',
         data: {
-            labels: <?= json_encode(array_column($docTypes, 'type')) ?>,
+            labels: <?= json_encode(array_column($docTypes, 'type_document')) ?>,
             datasets: [{
                 label: 'Documents',
                 data: <?= json_encode(array_column($docTypes, 'total')) ?>,
-                backgroundColor: ['#2196f3', '#03a9f4', '#00bcd4', '#009688', '#4caf50', '#8bc34a'],
+                backgroundColor: ['#2196f3', '#03a9f4', '#00bcd4', '#009688', '#4caf50', '#8bc34a', '#cddc39', '#ffeb3b'],
                 borderRadius: 6
             }]
         },
