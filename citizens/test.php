@@ -22,10 +22,10 @@ if (!isset($pdo)) die("<hr>STOP: send me your config/database.php content");
 
 // 4. Table check
 try {
-    $count = $pdo->query("SELECT COUNT(*) FROM citoyens")->fetchColumn();
-    echo "<b>4. Table citoyens:</b> <span style='color:green'>OK ($count rows)</span><br>";
+    $count = $pdo->query("SELECT COUNT(*) FROM documents")->fetchColumn();
+    echo "<b>4. Table documents:</b> <span style='color:green'>OK ($count rows)</span><br>";
 } catch (Throwable $e) {
-    echo "<b>4. Table citoyens:</b> <span style='color:red'>ERROR → " . $e->getMessage() . "</span><br>";
+    echo "<b>4. Table documents:</b> <span style='color:red'>ERROR → " . $e->getMessage() . "</span><br>";
 }
 
 // 5. Includes
@@ -33,4 +33,4 @@ echo "<b>5. header.php:</b> " . (file_exists(__DIR__ . '/../includes/header.php'
 echo " — <b>footer.php:</b> " . (file_exists(__DIR__ . '/../includes/footer.php') ? "<span style='color:green'>OK</span>" : "<span style='color:red'>MISSING</span>") . "<br>";
 
 echo "<hr>If all 5 are green, index.php has no reason to fail.";
-echo "<pre>" . print_r($pdo->query("SHOW COLUMNS FROM citoyens")->fetchAll(PDO::FETCH_ASSOC), true) . "</pre>";
+echo "<pre>" . print_r($pdo->query("SHOW COLUMNS FROM documents")->fetchAll(PDO::FETCH_ASSOC), true) . "</pre>";
