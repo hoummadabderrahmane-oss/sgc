@@ -1,14 +1,12 @@
 <?php
 /**
  * ============================================
- * CMS Baladiya - Page de connexion
- * Bootstrap 4 - Design Moderne
+ * CMS Baladiya - Page de connexion centrée
  * ============================================
  */
 define('SGC_ACCESS', true);
 session_start();
 
-// Rediriger si déjà connecté
 if (isset($_SESSION['user_id'])) {
     header('Location: admin/dashboard.php');
     exit;
@@ -82,7 +80,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             --primary: #1a5f2a;
             --primary-light: #2d8a3e;
             --primary-dark: #0d3d16;
-            --secondary: #f8f9fa;
         }
         
         * {
@@ -91,26 +88,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             box-sizing: border-box;
         }
         
-        body {
+        html, body {
+            height: 100%;
+            width: 100%;
             font-family: 'Poppins', sans-serif;
-            min-height: 100vh;
+        }
+        
+        body {
             background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 50%, var(--primary-light) 100%);
             display: flex;
             align-items: center;
             justify-content: center;
-            position: relative;
-            overflow: hidden;
+            min-height: 100vh;
         }
         
         /* Particules d'arrière-plan */
         .particles {
-            position: absolute;
+            position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
             overflow: hidden;
             z-index: 0;
+            pointer-events: none;
         }
         
         .particle {
@@ -123,35 +124,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         @keyframes float {
-            0%, 100% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+            0%, 100% { 
+                transform: translateY(100vh) rotate(0deg); 
+                opacity: 0; 
+            }
             10% { opacity: 1; }
             90% { opacity: 1; }
-            100% { transform: translateY(-100vh) rotate(720deg); opacity: 0; }
+            100% { 
+                transform: translateY(-100vh) rotate(720deg); 
+                opacity: 0; 
+            }
         }
         
-        /* Carte de login */
-        .login-card {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
-            box-shadow: 0 25px 80px rgba(0,0,0,0.3);
-            padding: 3rem;
-            width: 100%;
-            max-width: 420px;
+        /* ===== CONTAINER CENTRÉ ===== */
+        .login-wrapper {
             position: relative;
             z-index: 1;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.2);
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        /* ===== CARTE DE LOGIN ===== */
+        .login-card {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 24px;
+            box-shadow: 0 25px 80px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.1);
+            padding: 3rem 2.5rem;
+            width: 100%;
+            max-width: 420px;
             animation: slideUp 0.6s ease-out;
+            position: relative;
         }
         
         @keyframes slideUp {
             from {
                 opacity: 0;
-                transform: translateY(40px);
+                transform: translateY(40px) scale(0.95);
             }
             to {
                 opacity: 1;
-                transform: translateY(0);
+                transform: translateY(0) scale(1);
             }
         }
         
@@ -282,11 +297,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             z-index: 1;
         }
         
-        .login-footer a {
-            color: rgba(255,255,255,0.9);
-            text-decoration: underline;
-        }
-        
         /* Info par défaut */
         .default-info {
             background: #e8f5e9;
@@ -302,22 +312,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             font-size: 0.8rem;
         }
         
+        /* Checkbox remember */
+        .custom-control-input:checked ~ .custom-control-label::before {
+            background-color: var(--primary);
+            border-color: var(--primary);
+        }
+        
         /* Responsive */
         @media (max-width: 576px) {
             .login-card {
-                margin: 1rem;
-                padding: 2rem;
+                padding: 2rem 1.5rem;
+                border-radius: 20px;
             }
             
             .login-title {
                 font-size: 1.5rem;
             }
-        }
-        
-        /* Checkbox remember */
-        .custom-control-input:checked ~ .custom-control-label::before {
-            background-color: var(--primary);
-            border-color: var(--primary);
+            
+            body {
+                padding: 10px;
+            }
         }
     </style>
 </head>
@@ -335,76 +349,73 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php endfor; ?>
     </div>
     
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-12">
-                <div class="login-card">
-                    <!-- Logo -->
-                    <div class="login-logo">
-                        <i class="fas fa-landmark"></i>
-                    </div>
-                    
-                    <!-- Titre -->
-                    <h2 class="login-title">CMS Baladiya</h2>
-                    <p class="login-subtitle">Système de Gestion Municipale</p>
-                    
-                    <!-- Erreur -->
-                    <?php if ($error): ?>
-                        <div class="alert alert-custom alert-dismissible fade show" role="alert">
-                            <i class="fas fa-exclamation-triangle mr-2"></i>
-                            <?= htmlspecialchars($error) ?>
-                            <button type="button" class="close" data-dismiss="alert">
-                                <span>&times;</span>
-                            </button>
-                        </div>
-                    <?php endif; ?>
-                    
-                    <!-- Formulaire -->
-                    <form method="POST" action="" id="loginForm">
-                        <div class="form-group">
-                            <i class="fas fa-envelope input-icon"></i>
-                            <input type="email" class="form-control" name="email" id="email" 
-                                   placeholder="Adresse email" required autofocus
-                                   value="<?= htmlspecialchars($_POST['email'] ?? '') ?>">
-                        </div>
-                        
-                        <div class="form-group">
-                            <i class="fas fa-lock input-icon"></i>
-                            <input type="password" class="form-control" name="password" id="password" 
-                                   placeholder="Mot de passe" required>
-                        </div>
-                        
-                        <div class="form-group d-flex justify-content-between align-items-center">
-                            <div class="custom-control custom-checkbox">
-                                <input type="checkbox" class="custom-control-input" id="remember" name="remember">
-                                <label class="custom-control-label" for="remember" style="font-size: 0.85rem; color: #6c757d;">
-                                    Se souvenir de moi
-                                </label>
-                            </div>
-                            <a href="#" class="text-success" style="font-size: 0.85rem;">Mot de passe oublié?</a>
-                        </div>
-                        
-                        <button type="submit" class="btn btn-login">
-                            <i class="fas fa-sign-in-alt mr-2"></i>Se connecter
-                        </button>
-                    </form>
-                    
-                    <!-- Info par défaut -->
-                    <div class="default-info">
-                        <small>
-                            <i class="fas fa-info-circle mr-1"></i>
-                            Par défaut: <strong>admin@commune.ma</strong> / <strong>password</strong>
-                        </small>
-                    </div>
+    <!-- Wrapper centré -->
+    <div class="login-wrapper">
+        <div class="login-card">
+            <!-- Logo -->
+            <div class="login-logo">
+                <i class="fas fa-landmark"></i>
+            </div>
+            
+            <!-- Titre -->
+            <h2 class="login-title">CMS Baladiya</h2>
+            <p class="login-subtitle">Système de Gestion Municipale</p>
+            
+            <!-- Erreur -->
+            <?php if ($error): ?>
+                <div class="alert alert-custom alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                    <?= htmlspecialchars($error) ?>
+                    <button type="button" class="close" data-dismiss="alert">
+                        <span>&times;</span>
+                    </button>
+                </div>
+            <?php endif; ?>
+            
+            <!-- Formulaire -->
+            <form method="POST" action="" id="loginForm">
+                <div class="form-group">
+                    <i class="fas fa-envelope input-icon"></i>
+                    <input type="email" class="form-control" name="email" id="email" 
+                           placeholder="Adresse email" required autofocus
+                           value="<?= htmlspecialchars($_POST['email'] ?? '') ?>">
                 </div>
                 
-                <!-- Footer -->
-                <p class="login-footer">
-                    <i class="fas fa-code mr-1"></i> CMS Baladiya v1.0 - Système de Gestion Municipale<br>
-                    <span style="opacity: 0.7;">Développé avec <i class="fas fa-heart" style="color: #ff6b6b;"></i> pour les communes</span>
-                </p>
+                <div class="form-group">
+                    <i class="fas fa-lock input-icon"></i>
+                    <input type="password" class="form-control" name="password" id="password" 
+                           placeholder="Mot de passe" required>
+                </div>
+                
+                <div class="form-group d-flex justify-content-between align-items-center">
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox" class="custom-control-input" id="remember" name="remember">
+                        <label class="custom-control-label" for="remember" style="font-size: 0.85rem; color: #6c757d;">
+                            Se souvenir de moi
+                        </label>
+                    </div>
+                    <a href="#" class="text-success" style="font-size: 0.85rem;">Mot de passe oublié?</a>
+                </div>
+                
+                <button type="submit" class="btn btn-login">
+                    <i class="fas fa-sign-in-alt mr-2"></i>Se connecter
+                </button>
+            </form>
+            
+            <!-- Info par défaut -->
+            <div class="default-info">
+                <small>
+                    <i class="fas fa-info-circle mr-1"></i>
+                    Par défaut: <strong>admin@commune.ma</strong> / <strong>password</strong>
+                </small>
             </div>
         </div>
+    </div>
+    
+    <!-- Footer -->
+    <div class="login-footer" style="position: fixed; bottom: 20px; left: 0; right: 0;">
+        <i class="fas fa-code mr-1"></i> CMS Baladiya v1.0 - Système de Gestion Municipale<br>
+        <span style="opacity: 0.7;">Développé avec <i class="fas fa-heart" style="color: #ff6b6b;"></i> pour les communes</span>
     </div>
     
     <!-- Bootstrap 4 JS -->
@@ -413,13 +424,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     <script>
         $(document).ready(function() {
-            // Animation d'entrée
             $('.login-card').hide().fadeIn(600);
-            
-            // Focus sur le premier champ
             $('#email').focus();
             
-            // Animation au clic sur le bouton
             $('#loginForm').on('submit', function() {
                 $('.btn-login').html('<i class="fas fa-spinner fa-spin mr-2"></i>Connexion...');
             });
