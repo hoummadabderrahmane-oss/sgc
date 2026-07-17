@@ -20,10 +20,10 @@ if (empty($_SESSION['csrf'])) {
 $errors = [];
 $typeLabels = [
     'extrait_naissance' => 'Extrait de naissance',
-    'certificat_residence' => 'Certificat de résidence',
+    'certificat_residence' => 'Certificat de residence',
     'attestation_mariage' => 'Attestation de mariage',
-    'certificat_deces' => 'Certificat de décès',
-    'carte_identite' => 'Carte d'identité',
+    'certificat_deces' => 'Certificat de deces',
+    'carte_identite' => 'Carte d identite',
     'autre' => 'Autre'
 ];
 
@@ -44,16 +44,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $notes = trim($_POST['notes'] ?? '');
 
     if ($citoyen_id <= 0) {
-        $errors[] = 'Veuillez sélectionner un citoyen.';
+        $errors[] = 'Veuillez selectionner un citoyen.';
     }
     if (!array_key_exists($type_document, $typeLabels)) {
         $errors[] = 'Type de document invalide.';
     }
     if (empty($numero_document)) {
-        $errors[] = 'Le numéro de document est obligatoire.';
+        $errors[] = 'Le numero de document est obligatoire.';
     }
     if (empty($date_emission)) {
-        $errors[] = 'La date d'émission est obligatoire.';
+        $errors[] = 'La date d emission est obligatoire.';
     }
 
     if (empty($errors)) {
@@ -72,11 +72,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ':created_by' => $_SESSION['user_id']
             ]);
 
-            $_SESSION['flash'] = ['type' => 'success', 'message' => 'Document ajouté avec succès.'];
+            $_SESSION['flash'] = ['type' => 'success', 'message' => 'Document ajoute avec succes.'];
             header('Location: index.php');
             exit;
         } catch (PDOException $e) {
-            $errors[] = 'Erreur lors de l'ajout : ' . $e->getMessage();
+            $errors[] = 'Erreur lors de l ajout : ' . $e->getMessage();
         }
     }
 }
@@ -110,7 +110,7 @@ require_once __DIR__ . '/../includes/header.php';
                             <div class="col-md-6">
                                 <label class="form-label">Citoyen <span class="text-danger">*</span></label>
                                 <select name="citoyen_id" class="form-select" required>
-                                    <option value="">— Sélectionner un citoyen —</option>
+                                    <option value="">— Selectionner un citoyen —</option>
                                     <?php foreach ($citoyens as $c): ?>
                                         <option value="<?= $c['id'] ?>" <?= ($_POST['citoyen_id'] ?? '') == $c['id'] ? 'selected' : '' ?>>
                                             <?= htmlspecialchars($c['prenom'] . ' ' . $c['nom'] . ' (' . $c['cin'] . ')') ?>
@@ -121,25 +121,25 @@ require_once __DIR__ . '/../includes/header.php';
                             <div class="col-md-6">
                                 <label class="form-label">Type de document <span class="text-danger">*</span></label>
                                 <select name="type_document" class="form-select" required>
-                                    <option value="">— Sélectionner —</option>
+                                    <option value="">— Selectionner —</option>
                                     <?php foreach ($typeLabels as $k => $label): ?>
                                         <option value="<?= $k ?>" <?= ($_POST['type_document'] ?? '') === $k ? 'selected' : '' ?>><?= $label ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Numéro de document <span class="text-danger">*</span></label>
+                                <label class="form-label">Numero de document <span class="text-danger">*</span></label>
                                 <input type="text" name="numero_document" class="form-control" 
                                        placeholder="Ex: DOC-2026-0001" 
                                        value="<?= htmlspecialchars($_POST['numero_document'] ?? '') ?>" required>
                             </div>
                             <div class="col-md-3">
-                                <label class="form-label">Date d'émission <span class="text-danger">*</span></label>
+                                <label class="form-label">Date d emission <span class="text-danger">*</span></label>
                                 <input type="date" name="date_emission" class="form-control" 
                                        value="<?= htmlspecialchars($_POST['date_emission'] ?? date('Y-m-d')) ?>" required>
                             </div>
                             <div class="col-md-3">
-                                <label class="form-label">Date d'expiration</label>
+                                <label class="form-label">Date d expiration</label>
                                 <input type="date" name="date_expiration" class="form-control" 
                                        value="<?= htmlspecialchars($_POST['date_expiration'] ?? '') ?>">
                                 <small class="text-muted">Laissez vide si sans expiration</small>
@@ -147,7 +147,7 @@ require_once __DIR__ . '/../includes/header.php';
                             <div class="col-12">
                                 <label class="form-label">Notes / Observations</label>
                                 <textarea name="notes" class="form-control" rows="3" 
-                                          placeholder="Informations complémentaires..."></textarea>
+                                          placeholder="Informations complementaires..."></textarea>
                             </div>
                         </div>
 
