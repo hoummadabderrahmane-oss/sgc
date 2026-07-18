@@ -3,14 +3,14 @@ session_start();
 require_once __DIR__ . '/../config/database.php';
 $pdo = getDB();
 
-if (empty($_SESSION['user_id']) || ($_SESSION['role'] ?? '') !== 'admin') {
+if (empty($_SESSION['user_id'])) {
     header('Location: ../auth/login.php');
     exit;
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST'
     || !hash_equals($_SESSION['csrf'] ?? '', $_POST['csrf'] ?? '')) {
-    $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Requête invalide.'];
+    $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Requete invalide.'];
     header('Location: index.php');
     exit;
 }
@@ -34,16 +34,16 @@ $stmt = $pdo->prepare("SELECT id, nom, prenom, cin FROM citoyens WHERE id = :id"
 $stmt->execute([':id' => $data['citoyen_id']]);
 $citoyen = $stmt->fetch();
 if (!$citoyen) {
-    $errors[] = 'Veuillez sélectionner un citoyen valide.';
+    $errors[] = 'Veuillez selectionner un citoyen valide.';
 }
 if (!in_array($data['type_document'], $types, true)) {
     $errors[] = 'Type de document invalide.';
 }
 if ($data['date_emission'] !== '' && !strtotime($data['date_emission'])) {
-    $errors[] = "Date d'émission invalide.";
+    $errors[] = 'Date d emission invalide.';
 }
 if ($data['date_expiration'] !== '' && !strtotime($data['date_expiration'])) {
-    $errors[] = "Date d'expiration invalide.";
+    $errors[] = 'Date d expiration invalide.';
 }
 
 /* ---------- Fichier joint (optionnel) ---------- */
@@ -55,13 +55,13 @@ if (!empty($_FILES['fichier']['name'])) {
         || $_FILES['fichier']['size'] > 3 * 1024 * 1024) {
         $errors[] = 'Fichier invalide (pdf/jpg/png, 3 Mo maximum).';
     } else {
-        $uploadDir = __DIR__ . '/../asseets/uploads/documents/';
+        $uploadDir = __DIR__ . '/../assets/uploads/documents/';
         if (!is_dir($uploadDir)) {
             mkdir($uploadDir, 0777, true);
         }
         $fichierName = 'doc_' . uniqid() . '.' . $ext;
         if (!move_uploaded_file($_FILES['fichier']['tmp_name'], $uploadDir . $fichierName)) {
-            $errors[] = "Erreur lors de l'envoi du fichier.";
+            $errors[] = 'Erreur lors de l envoi du fichier.';
             $fichierName = null;
         }
     }
@@ -91,13 +91,11 @@ $stmt->execute([
 
 $newId = (int)$pdo->lastInsertId();
 
-/* ---------- Numéro automatique : XXX-AAAA-0000 ---------- */
+/* ---------- Numero automatique : XXX-AAAA-0000 ---------- */
 $numero = $prefixes[$data['type_document']] . '-' . date('Y') . '-' . str_pad($newId, 4, '0', STR_PAD_LEFT);
 $pdo->prepare('UPDATE documents SET numero_document = :num WHERE id = :id')
     ->execute([':num' => $numero, ':id' => $newId]);
 
-logActivity('Génération document', 'documents', $newId,
-            $numero . ' — ' . $citoyen['nom'] . ' ' . $citoyen['prenom'] . ' (' . $citoyen['cin'] . ')');
-
+$_SESSION['flash'] = ['type' => 'success', 'message' => 'Document genere avec succes.'];
 header('Location: attestation.php?id=' . $newId . '&new=1');
 exit;

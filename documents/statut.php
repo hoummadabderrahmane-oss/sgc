@@ -8,7 +8,7 @@ session_start();
 require_once __DIR__ . '/../config/database.php';
 $pdo = getDB();
 
-if (empty($_SESSION['user_id']) || ($_SESSION['role'] ?? '') !== 'admin') {
+if (empty($_SESSION['user_id'])) {
     header('Location: ../auth/login.php');
     exit;
 }
@@ -40,8 +40,8 @@ try {
     $stmt = $pdo->prepare("UPDATE documents SET statut = :statut WHERE id = :id");
     $stmt->execute([':statut' => $newStatut, ':id' => $id]);
 
-    $labels = ['valide' => 'validé', 'expire' => 'expiré', 'annule' => 'annulé'];
-    $_SESSION['flash'] = ['type' => 'success', 'message' => 'Document marqué comme ' . $labels[$newStatut] . '.'];
+    $labels = ['valide' => 'valide', 'expire' => 'expire', 'annule' => 'annule'];
+    $_SESSION['flash'] = ['type' => 'success', 'message' => 'Document marque comme ' . $labels[$newStatut] . '.'];
 } catch (PDOException $e) {
     $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Erreur : ' . $e->getMessage()];
 }

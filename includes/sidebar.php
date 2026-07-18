@@ -1,5 +1,10 @@
 <?php
-
+/**
+ * ============================================
+ * CMS Baladiya - Sidebar (Self-Contained)
+ * Works on ANY page without auth_check.php
+ * ============================================
+ */
 
 // Start session if not already started
 if (session_status() === PHP_SESSION_NONE) {
