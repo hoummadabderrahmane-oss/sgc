@@ -108,6 +108,11 @@ $stmt = $pdo->query("SELECT type_document, COUNT(*) as total FROM documents GROU
 $docsByType = $stmt->fetchAll();
 
 $pageTitle = 'Gestion des documents';
+
+// Compute asset base URL for images (handles subfolder installations)
+$assetBase = rtrim(dirname(dirname($_SERVER['PHP_SELF'])), '/\');
+$assetBase = $assetBase === '' ? '' : $assetBase;
+
 require_once __DIR__ . '/../includes/header.php';
 ?>
 
@@ -308,10 +313,15 @@ require_once __DIR__ . '/../includes/header.php';
     }
 
     /* Stat icon box image styling */
+    .stat-icon-box {
+        overflow: hidden;
+        flex-shrink: 0;
+    }
     .stat-icon-box img {
-        max-width: 100%;
-        max-height: 100%;
-        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        display: block;
     }
 
     /* Pagination modern */
@@ -366,7 +376,7 @@ require_once __DIR__ . '/../includes/header.php';
             <div class="card doc-stat-card shadow-sm border-0">
                 <div class="card-body d-flex align-items-center">
                     <div class="stat-icon-box bg-primary bg-opacity-10 text-primary me-3" style="padding: 8px;">
-                        <img src="../assets/images/logo-documents.png" alt="Documents" style="width: 40px; height: 40px; object-fit: contain;">
+                        <img src="<?= $assetBase ?>/assets/images/logo-documents.png" alt="Documents" style="width: 40px; height: 40px; object-fit: contain;">
                     </div>
                     <div class="flex-grow-1">
                         <div class="stat-value text-primary"><?= number_format($totalDocs) ?></div>
@@ -382,7 +392,7 @@ require_once __DIR__ . '/../includes/header.php';
             <div class="card doc-stat-card shadow-sm border-0">
                 <div class="card-body d-flex align-items-center">
                     <div class="stat-icon-box bg-success bg-opacity-10 text-success me-3" style="padding: 4px;">
-                        <img src="../assets/images/logo-valide.png" alt="Valide" style="width: 48px; height: 48px; object-fit: contain;">
+                        <img src="<?= $assetBase ?>/assets/images/logo-valide.png" alt="Valide" style="width: 48px; height: 48px; object-fit: contain;">
                     </div>
                     <div class="flex-grow-1">
                         <div class="stat-value text-success"><?= number_format($docsValides) ?></div>
@@ -398,7 +408,7 @@ require_once __DIR__ . '/../includes/header.php';
             <div class="card doc-stat-card shadow-sm border-0">
                 <div class="card-body d-flex align-items-center">
                     <div class="stat-icon-box bg-warning bg-opacity-10 text-warning me-3" style="padding: 4px;">
-                        <img src="../assets/images/logo-expire.png" alt="Expire" style="width: 48px; height: 48px; object-fit: contain;">
+                        <img src="<?= $assetBase ?>/assets/images/logo-expire.png" alt="Expire" style="width: 48px; height: 48px; object-fit: contain;">
                     </div>
                     <div class="flex-grow-1">
                         <div class="stat-value text-warning"><?= number_format($docsExpires) ?></div>
@@ -414,7 +424,7 @@ require_once __DIR__ . '/../includes/header.php';
             <div class="card doc-stat-card shadow-sm border-0">
                 <div class="card-body d-flex align-items-center">
                     <div class="stat-icon-box bg-danger bg-opacity-10 text-danger me-3" style="padding: 4px;">
-                        <img src="../assets/images/logo-annule.png" alt="Annule" style="width: 48px; height: 48px; object-fit: contain;">
+                        <img src="<?= $assetBase ?>/assets/images/logo-annule.png" alt="Annule" style="width: 48px; height: 48px; object-fit: contain;">
                     </div>
                     <div class="flex-grow-1">
                         <div class="stat-value text-danger"><?= number_format($docsAnnules) ?></div>
