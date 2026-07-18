@@ -94,6 +94,10 @@ $pageTitle = 'Nouveau document';
 require_once __DIR__ . '/../includes/header.php';
 ?>
 
+<!-- Select2 CSS for Bootstrap 5 -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+
 <style>
     .form-card { border-radius: 16px; overflow: hidden; }
     .form-card .card-header { background: white; border-bottom: 1px solid #f0f0f0; padding: 20px 24px; }
@@ -118,6 +122,79 @@ require_once __DIR__ . '/../includes/header.php';
     .type-option.active { border-color: #198754; background: rgba(25,135,84,0.05); }
     .type-option i { font-size: 1.8rem; margin-bottom: 8px; display: block; }
     .type-option .type-name { font-size: 0.8rem; font-weight: 600; }
+
+    /* Select2 Custom Styling to match Bootstrap 5 */
+    .select2-container--bootstrap-5 .select2-selection {
+        border-radius: 12px !important;
+        border: 1px solid #e9ecef !important;
+        min-height: 46px !important;
+        padding: 6px 12px !important;
+    }
+    .select2-container--bootstrap-5 .select2-selection:focus,
+    .select2-container--bootstrap-5.select2-container--focus .select2-selection,
+    .select2-container--bootstrap-5.select2-container--open .select2-selection {
+        border-color: #198754 !important;
+        box-shadow: 0 0 0 3px rgba(25, 135, 84, 0.1) !important;
+    }
+    .select2-container--bootstrap-5 .select2-dropdown {
+        border-radius: 12px !important;
+        border: 1px solid #e9ecef !important;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1) !important;
+    }
+    .select2-container--bootstrap-5 .select2-results__option {
+        padding: 10px 14px !important;
+        border-radius: 8px !important;
+        margin: 2px 6px !important;
+    }
+    .select2-container--bootstrap-5 .select2-results__option--highlighted {
+        background-color: rgba(25, 135, 84, 0.1) !important;
+        color: #198754 !important;
+    }
+    .select2-container--bootstrap-5 .select2-results__option--selected {
+        background-color: #198754 !important;
+        color: white !important;
+    }
+    .select2-container--bootstrap-5 .select2-search__field {
+        border-radius: 8px !important;
+        padding: 8px 12px !important;
+    }
+    .select2-container--bootstrap-5 .select2-search__field:focus {
+        border-color: #198754 !important;
+        box-shadow: 0 0 0 3px rgba(25, 135, 84, 0.1) !important;
+    }
+    .citizen-option {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .citizen-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #1a5f2a 0%, #2d8a3e 100%);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        font-weight: 700;
+        flex-shrink: 0;
+    }
+    .citizen-info {
+        display: flex;
+        flex-direction: column;
+    }
+    .citizen-name {
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+    .citizen-cin {
+        font-size: 0.75rem;
+        color: #6c757d;
+    }
+    .select2-selection__rendered .citizen-option {
+        padding: 2px 0;
+    }
 </style>
 
 <div class="container-fluid py-4">
@@ -170,14 +247,20 @@ require_once __DIR__ . '/../includes/header.php';
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="form-label"><i class="bi bi-person me-1"></i>Citoyen <span class="text-danger">*</span></label>
-                                <select name="citoyen_id" class="form-select" required>
-                                    <option value="">— Selectionner un citoyen —</option>
-                                    <?php foreach ($citoyens as $c): ?>
-                                        <option value="<?= $c['id'] ?>" <?= ($_POST['citoyen_id'] ?? '') == $c['id'] ? 'selected' : '' ?>>
-                                            <?= htmlspecialchars($c['prenom'] . ' ' . $c['nom'] . ' (' . $c['cin'] . ')') ?>
+                                <select name="citoyen_id" id="citoyen-select" class="form-select" required>
+                                    <option value="">— Rechercher et selectionner un citoyen —</option>
+                                    <?php foreach ($citoyens as $c): 
+                                        $initials = strtoupper(substr($c['prenom'] ?? '', 0, 1) . substr($c['nom'] ?? '', 0, 1));
+                                        $fullName = htmlspecialchars($c['prenom'] . ' ' . $c['nom']);
+                                        $cin = htmlspecialchars($c['cin'] ?? '');
+                                        $selected = ($_POST['citoyen_id'] ?? '') == $c['id'] ? 'selected' : '';
+                                    ?>
+                                        <option value="<?= $c['id'] ?>" data-avatar="<?= $initials ?>" data-cin="<?= $cin ?>" <?= $selected ?>>
+                                            <?= $fullName ?> — CIN: <?= $cin ?>
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
+                                <small class="text-muted">Tapez pour rechercher par nom ou CIN</small>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label"><i class="bi bi-file-earmark me-1"></i>Type de document <span class="text-danger">*</span></label>
@@ -226,5 +309,72 @@ require_once __DIR__ . '/../includes/header.php';
         </div>
     </div>
 </div>
+
+<!-- Select2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<script>
+$(document).ready(function() {
+    // Custom template for rendering citizen options
+    function formatCitizen(option) {
+        if (!option.id) {
+            return option.text;
+        }
+        var $option = $(option.element);
+        var avatar = $option.data('avatar') || '??';
+        var cin = $option.data('cin') || '';
+
+        return $(`
+            <div class="citizen-option">
+                <div class="citizen-avatar">${avatar}</div>
+                <div class="citizen-info">
+                    <span class="citizen-name">${option.text.split(' — ')[0]}</span>
+                    <span class="citizen-cin"><i class="bi bi-credit-card me-1"></i>${cin}</span>
+                </div>
+            </div>
+        `);
+    }
+
+    function formatCitizenSelection(option) {
+        if (!option.id) {
+            return option.text;
+        }
+        var $option = $(option.element);
+        var avatar = $option.data('avatar') || '??';
+        var cin = $option.data('cin') || '';
+
+        return $(`
+            <div class="citizen-option">
+                <div class="citizen-avatar">${avatar}</div>
+                <div class="citizen-info">
+                    <span class="citizen-name">${option.text.split(' — ')[0]}</span>
+                    <span class="citizen-cin">${cin}</span>
+                </div>
+            </div>
+        `);
+    }
+
+    $('#citoyen-select').select2({
+        theme: 'bootstrap-5',
+        placeholder: 'Rechercher un citoyen...',
+        allowClear: true,
+        width: '100%',
+        language: {
+            noResults: function() {
+                return 'Aucun citoyen trouve';
+            },
+            searching: function() {
+                return 'Recherche en cours...';
+            }
+        },
+        templateResult: formatCitizen,
+        templateSelection: formatCitizenSelection,
+        escapeMarkup: function(markup) {
+            return markup;
+        }
+    });
+});
+</script>
 
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>
